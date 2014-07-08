@@ -7,23 +7,48 @@ require "lib/PhotoLibrary/Library.php";
 require "lib/PhotoLibrary/Photo.php";
 require "lib/PhotoLibrary/Face.php";
 
-$library_path = $argv[1];
-$export_path = $argv[2];
+$cli_options = getopt( "l::o::js:", array( 'library::', 'output-dir::', 'jpegrescan', 'start-date:' ) );
 
-if ( empty( $library_path ) || empty( $export_path ) ) {
-	die( "Usage: php iphotodisc.php [librarypath] [exportpath]\n" );
+if ( isset( $cli_options['l'] ) ) {
+	$cli_options['library'] = $cli_options['l'];
 }
 
-if ( ! file_exists( $library_path ) ) {
-	die( "Error: Library does not exist (" . $library_path . ")\n" );
+if ( isset( $cli_options['o'] ) ) {
+	$cli_options['output-dir'] = $cli_options['o'];
 }
+
+if ( isset( $cli_options['j'] ) || isset( $cli_options['jpegrescan'] ) ) {
+	$cli_options['jpegrescan'] = true;
+}
+
+if ( isset( $cli_options['s'] ) ) {
+	$cli_options['start-date'] = $cli_options['s'];
+}
+
+if ( isset( $cli_options['start-date'] ) ) {
+	$cli_options['start-date'] = date( 'Y-m-d', strtotime( $cli_options['start-date'] ) );
+}
+
+if ( empty( $cli_options['library'] ) || empty( $cli_options['output-dir'] ) ) {
+	file_put_contents('php://stderr', "Usage: ./iphotodisc.php --library=/path/to/photo/library --output-dir=/path/for/exported/files [--jpegrescan --start-date=1950-01-01]\n" );
+	die;
+}
+
+if ( ! file_exists( $cli_options['library'] ) ) {
+	file_put_contents('php://stderr', "Error: Library does not exist (" . $cli_options['library'] . ")\n" );
+	die;
+}
+
+// Ensure the paths ends with a slash.
+$cli_options['output-dir'] = rtrim( $cli_options['output-dir'], '/' ) . '/';
+$cli_options['library'] = rtrim( $cli_options['library'], '/' ) . '/';
 
 function sort_photos_by_date( $a, $b ) {
 	return $a->getDateTime()->format( "U" ) < $b->getDateTime()->format( "U" ) ? -1 : 1;
 }
 
 function get_export_folder_name( $date, $title ) {
-	global $export_path;
+	global $cli_options;
 	
 	$title = str_replace( "/", "-", $title );
 	
@@ -33,55 +58,62 @@ function get_export_folder_name( $date, $title ) {
 		$folder_basis .= " - " . $title;
 	}
 	
-	if ( ! file_exists( $export_path . $folder_basis ) ) {
-		return $export_path . $folder_basis . "/";
+	if ( ! file_exists( $cli_options['output-dir'] . $folder_basis ) ) {
+		return $cli_options['output-dir'] . $folder_basis . "/";
 	}
 	else {
 		$suffix = 2;
 		
-		while ( file_exists( $export_path . $folder_basis . " - " . str_pad( $suffix, 2, "0", STR_PAD_LEFT ) ) ) {
+		while ( file_exists( $cli_options['output-dir'] . $folder_basis . " - " . str_pad( $suffix, 2, "0", STR_PAD_LEFT ) ) ) {
 			$suffix++;
 		}
 		
-		return $export_path . $folder_basis . " - " . str_pad( $suffix, 2, "0", STR_PAD_LEFT ) . "/";
+		return $cli_options['output-dir'] . $folder_basis . " - " . str_pad( $suffix, 2, "0", STR_PAD_LEFT ) . "/";
 	}
 }
 
 function get_export_thumb_folder_name( $event_folder ) {
-	global $export_path;
+	global $cli_options;
 	
-	return $export_path . str_replace( $export_path, "thumbnails/", $event_folder );
+	return $cli_options['output-dir'] . str_replace( $cli_options['output-dir'], "thumbnails/", $event_folder );
 }
-
-// Ensure the export path ends with a slash.
-$export_path = rtrim( $export_path, '/' ) . '/';
 
 // Don't allow an export to a directory that exists.
-if ( ! is_dir( $export_path ) ) {
-	mkdir( $export_path );
+if ( ! file_exists( $cli_options['output-dir'] ) ) {
+	if ( ! mkdir( $cli_options['output-dir'] ) ) {
+		file_put_contents('php://stderr', "Error: Could not create directory: " . $cli_options['output-dir'] . "\n" );
+		die;
+	}
 }
 else {
-	die( "Export path already exists: $export_path\n" );
+	file_put_contents('php://stderr', "Error: Output directory already exists: " . $cli_options['output-dir'] . "\n" );
+	die;
 }
 
+echo "Copying website structure...\n";
+
 // Copy over the HTML/JS/CSS for the website.
-shell_exec( "cp -r site/* " . escapeshellarg( $export_path ) );
+shell_exec( "cp -r site/* " . escapeshellarg( $cli_options['output-dir'] ) );
 
-$original_export_path = $export_path;
-$export_path .= 'photos/';
+$original_export_path = $cli_options['output-dir'];
+$cli_options['output-dir'] .= 'photos/';
 
-mkdir( $export_path );
-mkdir( $export_path . "thumbnails/" );
+mkdir( $cli_options['output-dir'] );
+mkdir( $cli_options['output-dir'] . "thumbnails/" );
 
-$library = new \PhotoLibrary\Library( $library_path );
+$library = new \PhotoLibrary\Library( $cli_options['library'] );
 
 $json_events = array();
 $json_photos = array();
 
 $photo_idx = 1;
 
+echo "Finding events...\n";
+
 // Get all the events and sort them.
 $all_events = $library->getAlbumsOfType( 'Event' );
+
+echo "Found " . count( $all_events ) . " events\n";
 
 function get_event_date( $event ) {
 	$photos = $event->getPhotos();
@@ -104,6 +136,8 @@ if ( $start_date_arg = array_search( '--start-date', $argv ) ) {
 }
 
 foreach ( $all_events as $event ) {
+	echo "Processing event: " . $event->getName() . "...\n";
+	
 	$event_idx = count( $json_events ) + 1;
 	$event_photos = array();
 	
@@ -124,8 +158,8 @@ foreach ( $all_events as $event ) {
 		$event_name = '';
 	}
 	
-	// Ignore event titles that are just Scan 123.jpg
-	if ( preg_match( "/^Scan /", $event_name ) ) {
+	// Ignore event titles that are just scanner/camera defaults.
+	if ( preg_match( "/^(Scan|PD_)/", $event_name ) ) {
 		$event_name = '';
 	}
 	
@@ -183,7 +217,7 @@ foreach ( $all_events as $event ) {
 		if ( ! file_exists( $event_folder . $photo_filename ) ) {
 			copy( $photo->getPath(), $event_folder . $photo_filename );
 			
-			if ( in_array( '--optimize', $argv ) ) {
+			if ( isset( $cli_options['jpegrescan'] ) ) {
 				shell_exec( "jpegrescan " . escapeshellarg( $event_folder . $photo_filename ) . " " . escapeshellarg( $event_folder . $photo_filename ) . " > /dev/null 2>&1" );
 			}
 			
@@ -194,7 +228,7 @@ foreach ( $all_events as $event ) {
 		if ( ! file_exists( $thumb_folder . "thumb_" . $photo_filename ) ) {
 			shell_exec( "sips -Z 300 " . escapeshellarg( $event_folder . $photo_filename ) . " --out " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " 2> /dev/null" );
 			
-			if ( in_array( '--optimize', $argv ) ) {
+			if ( isset( $cli_options['jpegrescan'] ) ) {
 				shell_exec( "jpegrescan " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " > /dev/null 2>&1"  );
 			}
 			
@@ -203,7 +237,7 @@ foreach ( $all_events as $event ) {
 		
 		$idx++;
 		
-		$json_photos[ $photo_idx ] = array( 'id' => $photo_idx, 'path' => str_replace( $export_path, '', $event_folder . $photo_filename ), 'thumb_path' => str_replace( $export_path, '', $thumb_folder . "thumb_" . $photo_filename ), 'event_id' => $event_idx, 'title' => $title, 'description' => trim( $photo->getDescription() ), 'faces' => $face_names, 'date' => date( "Y-m-d", $photoTimestamp ), 'dateFriendly' => date( "F j, Y", $photoTimestamp ) );
+		$json_photos[ $photo_idx ] = array( 'id' => $photo_idx, 'path' => str_replace( $cli_options['output-dir'], '', $event_folder . $photo_filename ), 'thumb_path' => str_replace( $cli_options['output-dir'], '', $thumb_folder . "thumb_" . $photo_filename ), 'event_id' => $event_idx, 'title' => $title, 'description' => trim( $photo->getDescription() ), 'faces' => $face_names, 'date' => date( "Y-m-d", $photoTimestamp ), 'dateFriendly' => date( "F j, Y", $photoTimestamp ) );
 		$event_photos[] = $photo_idx;
 		
 		$photo_idx++;
@@ -212,4 +246,9 @@ foreach ( $all_events as $event ) {
 	$json_events[ $event_idx ] = array( 'id' => $event_idx, 'title' => trim( $event_name ), 'date' => $event_date, 'dateFriendly' => date( "F j, Y", strtotime( $event_date ) ), 'photos' => $event_photos );
 }
 
+echo "Writing JS for website...\n";
+
 file_put_contents( $original_export_path . "/data.js", "var events = " . json_encode( $json_events, JSON_PRETTY_PRINT ) . ";\n\nvar photos = " . json_encode( $json_photos, JSON_PRETTY_PRINT ) . ";\n\n" );
+
+echo "Done.\n";
+

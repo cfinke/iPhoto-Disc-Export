@@ -10,11 +10,11 @@ Usage
 
 Run it like this:
 
-`$ php photolibrary.php [path to iPhoto Library] [path to export directory] [optional args here]`
+`$ ./iphotodisc.php --library=/path/to/photo/library --output-dir=/path/for/exported/files [--jpegrescan --start-date=1950-01-01]`
 
 Optional arguments:
 
-* `--optimize`: will invoke `jpegrescan` to optimize the size of the export photos. (Obviously, you must have `jpegrescan` installed.) This will take a long time.
+* `--jpegrescan`: will invoke `jpegrescan` to optimize the size of the export photos. (Obviously, you must have `jpegrescan` installed.) This will take a long time.
 * `--start-date YYYY-MM-DD`: will limit the export to photos from on or after that date.
 
 I've noticed that the iPhoto Library you're exporting must be the last one you opened in iPhoto (if you have multple libraries); I think this is a bug in one of the libraries this software uses, but I haven't taken the time to figure that out.
