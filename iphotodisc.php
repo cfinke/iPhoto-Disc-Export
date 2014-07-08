@@ -62,6 +62,8 @@ function get_export_folder_name( $date, $title ) {
 		$folder_basis .= " - " . $title;
 	}
 	
+	$folder_basis = preg_replace( '/[^a-zA-Z0-9 \(\)\.,\-]/', '', $folder_basis );
+	
 	if ( ! file_exists( $cli_options['output-dir'] . $folder_basis ) ) {
 		return $cli_options['output-dir'] . $folder_basis . "/";
 	}
@@ -206,6 +208,8 @@ foreach ( $all_events as $event ) {
 		$photo_path = $photo->getPath();
 		$tmp = explode( ".", $photo_path );
 		$photo_extension = array_pop( $tmp );
+		
+		$photo_filename = preg_replace( '/[^a-zA-Z0-9 \(\)\.,\-]/', '', $photo_filename );
 		
 		$photo_filename .= "." . $photo_extension;
 		

@@ -314,7 +314,7 @@
 				function generate_thumbnail( photo, link, title, meta ) {
 					var template = $( $( '#thumbnail-template' ).html() );
 					
-					template.find( '.gallery-tile' ).attr( 'data-original', 'photos/' + photo.thumb_path );//css( 'background-image', 'url("photos/' + photo.thumb_path + '")' );
+					template.find( '.gallery-tile' ).attr( 'data-original', 'photos/' + photo.thumb_path );
 					template.find( 'a' ).attr( 'href', link );
 					template.find( '.post-title' ).text( title );
 					template.find( '.post-meta' ).text( meta );
