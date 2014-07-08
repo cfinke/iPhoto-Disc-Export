@@ -47,3 +47,5 @@ This repository contains a number of projects that are developed elsewhere:
 * The jQuery lazyload plugin lives at http://www.appelsiini.net/projects/lazyload
 * jQuery: http://jquery.com/
 * modernizr.js: http://modernizr.com
+* Lato fonts: http://www.latofonts.com/lato-free-fonts/
+* Open Baskerville font: http://klepas.org/openbaskerville/
