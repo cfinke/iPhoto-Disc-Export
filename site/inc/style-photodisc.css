@@ -1,0 +1,177 @@
+.toggler {
+	display: none;
+}
+
+.site-headers {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+	margin-bottom: 20px;
+	margin-top: 10px;
+}
+
+#faces-list-container  {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+	margin-bottom: 20px;
+	padding-bottom: 20px;
+	padding-top: 0;
+	
+}
+
+.site-description:empty {
+	display: none;
+}
+
+.site-description {
+	padding-bottom: 20px;
+}
+
+form {
+	padding-bottom: 20px;
+}
+
+body.photo .toggler.show-photo {
+	display: block;
+}
+
+body.event .toggler.show-event {
+	display: block;
+}
+
+body.search .toggler.show-search {
+	display: block;
+}
+
+body.events .toggler.show-events {
+	display: block;
+}
+
+#faces-list-container {
+	clear: left;
+}
+
+.primary-navigation > div > ul {
+	list-style-type: disc;
+	padding-left: 20px;
+}
+
+#gallery li .post-meta {
+	margin-left: 10px;
+}
+
+.portfolio-post .post-header {
+	text-align: left;
+}
+
+.portfolio-post .post-header .featured-image, .portfolio-post .post-summary {
+	margin-left: 0;
+}
+
+body.photo .site-title {
+	font-size: 15px;
+}
+
+body.photo .site-description {
+	color: #ccc;
+}
+
+body.photo .site-title:not(:empty):before {
+	content: open-quote;
+}
+
+body.photo .site-title:not(:empty):after {
+	content: close-quote;
+}
+
+.portfolio-post .static-permalink {
+	float: none;
+	margin: 0;
+}
+
+#page form .search-submit {
+  background: url("images/search.png") no-repeat;
+  background-color: transparent;
+  border-radius: 0;
+  border: 0;
+  width: 18px;
+  color: transparent;
+  text-indent: -4000px;
+  float: left;
+  position: relative;
+  top: -21px;
+  left: 10px;
+  width: 13px;
+  height: 13px;
+  padding: 0;
+}
+@media (min--moz-device-pixel-ratio: 1.3), (-o-min-device-pixel-ratio: 2.6 / 2), (-webkit-min-device-pixel-ratio: 1.3), (min-device-pixel-ratio: 1.3), (min-resolution: 1.3dppx) {
+  #page form .search-submit {
+    /* on retina, use image that's scaled by 2 */
+    background-image: url("search@2x.png");
+    background-size: 13px 13px;
+  }
+}
+#page form .search-field {
+  outline: 0;
+  border-radius: 94px;
+  background: #FBFBFB;
+  border: 1px solid #E3E3E3;
+  font-family: Lato;
+  font-size: 13px;
+  color: #666;
+  line-height: 16px;
+  height: 30px;
+  width: 100%;
+  padding-left: 30px;
+  padding-right: 10px;
+  -webkit-transition: color 100ms ease-in;
+  -moz-transition: color 100ms ease-in;
+  -o-transition: color 100ms ease-in;
+  transition: color 100ms ease-in;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+#page form .search-field:focus {
+  border: 1px solid #c5c5c5;
+}
+#page form .search-field.placeholder {
+  color: inherit;
+  font-weight: inherit;
+}
+#page form .search-field:-moz-placeholder {
+  color: inherit;
+  font-weight: inherit;
+}
+#page form .search-field::-moz-placeholder {
+  color: inherit;
+  font-weight: inherit;
+}
+#page form .search-field:-ms-input-placeholder {
+  color: inherit;
+  font-weight: inherit;
+}
+#page form .search-field::-webkit-input-placeholder {
+  color: inherit;
+  font-weight: inherit;
+}
+#page form .search-field:focus {
+  color: #666666;
+}
+#page form .search-field:focus.placeholder {
+  color: #CCCCCC;
+}
+#page form .search-field:focus:-moz-placeholder {
+  color: #CCCCCC;
+}
+#page form .search-field:focus::-moz-placeholder {
+  color: #CCCCCC;
+}
+#page form .search-field:focus:-ms-input-placeholder {
+  color: #CCCCCC;
+}
+#page form .search-field:focus::-webkit-input-placeholder {
+  color: #CCCCCC;
+}
+
+#gallery ul .gallery-tile {
+	background-size: contain;
+}

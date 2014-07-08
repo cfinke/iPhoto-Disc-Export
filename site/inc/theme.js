@@ -1,0 +1,1 @@
+jQuery(function($) { new PXU(); });

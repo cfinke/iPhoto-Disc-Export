@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en-US">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Family Photos</title>
+		<link rel="stylesheet" href="inc/lato.css" type="text/css" media="all">
+		<link rel="stylesheet" href="inc/baskerville.css" type="text/css" media="all">
+		<link rel="stylesheet" href="inc/style.css" type="text/css" media="all">
+		<link rel="stylesheet" href="inc/style-photodisc.css" type="text/css" media="all">
+		<script type="text/javascript" src="inc/modernizr.js"></script>
+		<script type="text/javascript" src="inc/jquery.js"></script>
+		<script type="text/javascript" src="inc/jquery-migrate.js"></script>
+		<script type="text/javascript" src="inc/jquery.lazyload.js"></script>
+		<script src="data.js" type="text/javascript"></script>
+		<script src="jquery.js" type="text/javascript"></script>
+		<script type="text/html" id="thumbnail-template">
+			<li class="post type-post status-publish format-standard has-post-thumbnail hentry">
+				<div class="gallery-tile lazy">
+					<a class="dimmer" href="#">
+						<h1 class="post-title"></h1>
+					</a>
+					<div class="gallery-tile-padder landscape"></div>
+				</div>
+				<p class="post-meta"></p>
+			</li>
+		</script>
+		<script type="text/html" id="photo-template">
+			<article style="display: inline-block;" class="post type-post status-publish format-standard has-post-thumbnail hentry portfolio-post processed">
+				<a href="#"><img class="featured-image" src="about:blank"></a>
+			</article>
+		</script>
+		<script type="text/html" id="face-in-this-photo-template">
+			<li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home"><a href="#"></a></li>
+		</script>
+	</head>
+	<body class="page page-template page-template-portfolio-php custom-background">
+		<div id="page">
+			<header class="site-header inverted">
+				<div class="site-header-dimmer eighty">
+					<div class="toggler show-event show-search show-photo">
+						<a href="#">&laquo;Back to all photos</a>
+					</div>
+					<div class="site-headers">
+						<h1 class="site-title"></h1>
+						<h2 class="site-description"></h2>
+					</div>
+					<form role="search" method="get" class="search-form" action="">
+						<label>
+							<input type="search" class="search-field" placeholder="Search &hellip;" value="" name="s" title="Search for:">
+						</label>
+						<input type="submit" class="search-submit" value="Search">
+					</form>
+					<nav class="primary-navigation expanded" id="faces-list-container">
+						<div>
+							<span>People in this photo:</span>
+							<ul id="faces-list" class="menu"></ul>
+						</div>
+					</nav>
+					<div class="contact toggler show-photo">
+						<div class="contact-field">
+							<a href="#" class="view-full">Download hi-res copy</a>
+						</div>
+
+						<div class="contact-field">
+							<a href="#" class="view-date">View all photos from this day &raquo;</a>
+						</div>
+						<div class="contact-field">
+							<a href="#" class="view-set">View all photos from this set &raquo;</a>
+						</div>
+					</div>
+				</div><!-- .site-header-dimmer -->
+			</header>
+			<div id="content" class="site-content ">
+				<main id="main">
+					<div id="permalinks"></div>
+					<div id="gallery">
+						<ul class="clearfix" id="thumbnail-container"></ul>
+					</div>
+				</main>
+			</div>
+		</div>
+		<script type="text/javascript" src="inc/navigation.js"></script>
+		<script type="text/javascript" src="inc/skip-link-focus-fix.js"></script>
+		<script type="text/javascript" src="inc/FitText.js"></script>
+		<script type="text/javascript" src="inc/_pxu.js"></script>
+		<script type="text/javascript" src="inc/theme.js"></script>
+		<script type="text/javascript">
+			$( function () {
+				
+				$( window ).on( 'hashchange', function ( e ) {
+					var hash = window.location.hash;
+					
+					$( 'body' ).removeClass( 'events' ).removeClass( 'event' ).removeClass( 'search' ).removeClass( 'photo' );
+					
+					$( '.site-title, .site-description' ).text( '' );
+					$( '#thumbnail-container' ).html( '' );
+					$( '#permalinks' ).html( '' );
+					$( '#faces-list' ).html( '' );
+					$( '#faces-list-container' ).hide();
+					$( 'input.search-field' ).val( '' );
+					
+					if ( ! hash ) {
+						show_events();
+						
+						$( 'body' ).addClass( 'events' );
+					}
+					else {
+						var path = hash.split( '/' );
+						var pageType = path[ path.length - 2 ];
+						var pageId = path[ path.length - 1];
+					
+						if ( pageType == 'photo' ) {
+							show_photo( pageId );
+							
+							$( 'body' ).addClass( 'photo' );
+						}
+						else if ( pageType == 'event' ) {
+							show_event( pageId );
+							
+							$( 'body' ).addClass( 'event' );
+						}
+						else if ( pageType == 'search' ) {
+							var query_string = decodeURIComponent( pageId );
+							var query = parseSearchQuery( query_string );
+							show_search( query_string );
+							$( 'input.search-field' ).val( query_string );
+					
+							$( 'body' ).addClass( 'search' );
+						}
+					}
+					
+					$( ".lazy" ).lazyload();
+				} );
+				
+				$( window ).trigger( 'hashchange' );
+				
+				
+				$( '.search-form' ).on( 'submit', function ( e ) {
+					e.preventDefault();
+					
+					document.location.href = '#!/search/' + encodeURIComponent( $( this ).find( '.search-field:first' ).val() );
+				} );
+				
+				function show_events( ) {
+					$( '.site-title' ).text( 'All Photosets' );
+					
+					for ( var i in events ) {
+						var title = events[i].title;
+						
+						var meta = events[i].photos.length + ' photo';
+						
+						if ( events[i].photos.length > 1 ) {
+							meta += 's';
+						}
+						
+						meta += " from " + events[i].dateFriendly;
+						
+						var thumbnail = generate_thumbnail( photos[ events[i].photos[0] ], '#!/event/' + i, title, meta );
+						
+						$( '#thumbnail-container' ).append( thumbnail );
+					}
+					
+					window.scrollTo( 0, 0 );
+				}
+				
+				function show_event( event_id ) {
+					var event_title = events[event_id].title;
+					$( '.site-title' ).text( event_title );
+					$( '.site-description' ).text( "Photoset: " + events[event_id].dateFriendly );
+
+					for ( var i = 0; i < events[event_id].photos.length; i++ ) {
+						var photo = photos[ events[event_id].photos[i] ];
+						
+						var title = photo.title;
+						
+						var thumbnail = generate_thumbnail( photo, '#!/event/' + event_id + '/photo/' + photo.id, title, photo.description );
+						$( '#thumbnail-container' ).append( thumbnail );
+					}
+					
+					window.scrollTo( 0, 0 );
+				}
+				
+				function show_search( query_string ) {
+					$( '.site-title' ).text( "Search Results" );
+					
+					var query = parseSearchQuery( query_string );
+					
+					var resultCount = 0;
+					
+					for ( var i in photos ) {
+						if ( matchesSearch( photos[i].title + " + " + photos[i].description + " + " + photos[i].faces.join( ' + ' ) + " + " + photos[i].date + " + " + photos[i].dateFriendly, query ) ) {
+							var thumbnail = generate_thumbnail( photos[i], '#!/search/' + encodeURIComponent( query_string ) + '/photo/' + photos[i].id, photos[i].title );
+							$( '#thumbnail-container' ).append( thumbnail ); 
+							resultCount++;
+						}
+					}
+					
+					$( '.site-description' ).text( resultCount + ' photo' + ( resultCount == 1 ? '' : 's' ) );
+					
+					window.scrollTo( 0, 0 );
+				}
+				
+				function show_photo( photo_id ) {
+					var photo = photos[photo_id];
+
+					$( '.site-title' ).text( photo.description );
+					$( '.site-description' ).text( photo.dateFriendly );
+					var photo_markup = generate_photo( photo );
+					
+					$( '#permalinks' ).append( photo_markup );
+					
+					$( '#permalinks img' ).css( 'max-height', $( window ).height() - 100 );
+					
+					var faces = photo.faces;
+					
+					if ( faces.length > 0 ) {
+						for ( var i = 0; i < faces.length; i++ ) {
+							var face = generate_face( faces[i] );
+							$( '#faces-list' ).append( face );
+						}
+						
+						$( '#faces-list-container' ).show();
+					}
+					
+					$( '.view-date' ).attr( 'href', '#!/search/' + photo.date );
+					$( '.view-set' ).attr( 'href', '#!/event/' + photo.event_id );
+					$( '.view-full' ).attr( 'href', 'photos/' + photo.path );
+				}
+				
+				function parseSearchQuery( q ) {
+					var queryObject = [];
+					
+					if ( q ) {
+						q = q.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+						
+						var qParts = [];
+			
+						// We now have a space delimited string, but it may included quoted phrases
+						var currentQ = "";
+						var inQuotes = 0;
+			
+						for (var i = 0; i < q.length; i++) {
+							var theChar = q.charAt(i);
+				
+							if (theChar == "'" || theChar == '"') {
+								if (inQuotes == theChar) {
+									inQuotes = false;
+								}
+								else if (currentQ.length == 0 || (currentQ.length == 1 && (currentQ == "-"))){
+									inQuotes = theChar;
+								}
+								else {
+									currentQ += theChar;
+								}
+							}
+							else if (theChar == "+" && currentQ.length == 0) {
+							}
+							else {
+								if (theChar == " "){ 
+									if (!inQuotes) {
+										qParts.push(currentQ);
+										currentQ = "";
+										continue;
+									}
+								}
+					
+								currentQ += q.charAt(i);
+							}
+						}
+			
+						if (currentQ != "") qParts.push(currentQ);
+			
+						for (var i = 0; i < qParts.length; i++) {
+							var nomatch = false;
+				
+							if (qParts[i].charAt(0) == '-') {
+								qParts[i] = qParts[i].substring(1);
+								nomatch = true;
+							}
+				
+							if (qParts[i]) {
+								queryObject.push( { "nomatch" : nomatch, "regex" : new RegExp(qParts[i], "i") } );
+							}
+						}
+					}
+					
+					return queryObject;
+				}
+				
+				function matchesSearch(str, search) {
+					if (search.length == 0) {
+						return true;
+					}
+					else {
+						for (var i = 0; i < search.length; i++) {
+							if (search[i].nomatch) {
+								if (str.match(search[i].regex)) {
+									return false;
+								}
+							}
+							else {
+								if (!str.match(search[i].regex)) {
+									return false;
+								}
+							}
+						}
+					}
+		
+					return true;
+				}
+				
+				function generate_thumbnail( photo, link, title, meta ) {
+					var template = $( $( '#thumbnail-template' ).html() );
+					
+					template.find( '.gallery-tile' ).attr( 'data-original', 'photos/' + photo.thumb_path );//css( 'background-image', 'url("photos/' + photo.thumb_path + '")' );
+					template.find( 'a' ).attr( 'href', link );
+					template.find( '.post-title' ).text( title );
+					template.find( '.post-meta' ).text( meta );
+					
+					return template;
+				}
+				
+				function generate_photo( photo ) {
+					var template = $( $( '#photo-template' ).html() );
+					template.find( 'img' ).attr( 'src', 'photos/' + photo.path );
+					template.find( 'a' ).attr( 'href', 'photos/' + photo.path );
+					return template;
+				}
+				
+				function generate_face( face ) {
+					var template = $( $( '#face-in-this-photo-template' ).html() );
+					template.find( 'a' ).text( face ).attr( 'href', '#!/search/' + encodeURIComponent( '"' + face + '"' ) );
+					return template;
+				}
+			} );
+		</script>
+	</body>
+</html>

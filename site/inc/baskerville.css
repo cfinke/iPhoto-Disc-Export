@@ -1,0 +1,6 @@
+@font-face {
+  font-family: 'Libre Baskerville';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Libre Baskerville'), local('LibreBaskerville-Regular'), url(fonts/OpenBaskerville-0.0.75.woff) format('woff');
+}
