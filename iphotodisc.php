@@ -29,6 +29,10 @@ if ( isset( $cli_options['start-date'] ) ) {
 	$cli_options['start-date'] = date( 'Y-m-d', strtotime( $cli_options['start-date'] ) );
 }
 
+if ( ! isset( $cli_options['start-date'] ) || ! $cli_options['start-date'] ) {
+	$cli_options['start-date'] = false;
+}
+
 if ( empty( $cli_options['library'] ) || empty( $cli_options['output-dir'] ) ) {
 	file_put_contents('php://stderr', "Usage: ./iphotodisc.php --library=/path/to/photo/library --output-dir=/path/for/exported/files [--jpegrescan --start-date=1950-01-01]\n" );
 	die;
@@ -129,12 +133,6 @@ function sort_events( $a, $b ) {
 
 usort( $all_events, 'sort_events' );
 
-$start_date = false;
-
-if ( $start_date_arg = array_search( '--start-date', $argv ) ) {
-	$start_date = date( 'Y-m-d', strtotime( $argv[$start_date_arg + 1] ) );
-}
-
 foreach ( $all_events as $event ) {
 	echo "Processing event: " . $event->getName() . "...\n";
 	
@@ -147,7 +145,7 @@ foreach ( $all_events as $event ) {
 	
 	$event_date = get_event_date( $event );
 	
-	if ( $start_date && $event_date < $start_date ) {
+	if ( $cli_options['start-date'] && $event_date < $cli_options['start-date'] ) {
 		continue;
 	}
 	
