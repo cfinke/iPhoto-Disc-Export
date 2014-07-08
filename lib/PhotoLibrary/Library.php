@@ -312,7 +312,7 @@ class Library
     public function getFaceName($faceKey)
     {
         if (is_null($this->faceDb)) {
-            $possibleFaceDbLocations = array('Database' . DIRECTORY_SEPARATOR . 'apdb' . DIRECTORY_SEPARATOR . 'Faces.db', 'Database' . DIRECTORY_SEPARATOR .
+            $possibleFaceDbLocations = array('Database' . DIRECTORY_SEPARATOR . 'apdb' . DIRECTORY_SEPARATOR . 'Faces.db', 'Database' . DIRECTORY_SEPARATOR . 'Faces.db' );
 
             foreach ($possibleFaceDbLocations as $faceDbPath) {
                 try {
