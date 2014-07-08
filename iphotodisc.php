@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 
 require "lib/CFPropertyList/CFPropertyList.php";
