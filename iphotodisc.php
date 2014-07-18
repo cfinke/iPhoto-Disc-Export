@@ -7,7 +7,7 @@ require "lib/PhotoLibrary/Library.php";
 require "lib/PhotoLibrary/Photo.php";
 require "lib/PhotoLibrary/Face.php";
 
-$cli_options = getopt( "l::o::js:", array( 'library::', 'output-dir::', 'jpegrescan', 'start-date:' ) );
+$cli_options = getopt( "l::o::js:u", array( 'library::', 'output-dir::', 'jpegrescan', 'start-date:', 'update_site' ) );
 
 if ( isset( $cli_options['l'] ) ) {
 	$cli_options['library'] = $cli_options['l'];
@@ -31,6 +31,17 @@ if ( isset( $cli_options['start-date'] ) ) {
 
 if ( ! isset( $cli_options['start-date'] ) || ! $cli_options['start-date'] ) {
 	$cli_options['start-date'] = false;
+}
+
+if ( isset( $cli_options['u'] ) ) {
+	$cli_options['update_site'] = true;
+}
+
+if ( isset( $cli_options['update_site'] ) ) {
+	$cli_options['update_site'] = true;
+}
+else {
+	$cli_options['update_site'] = false;
 }
 
 if ( empty( $cli_options['library'] ) || empty( $cli_options['output-dir'] ) ) {
@@ -91,7 +102,7 @@ if ( ! file_exists( $cli_options['output-dir'] ) ) {
 		die;
 	}
 }
-else {
+else if ( ! $cli_options['update_site'] ) {
 	file_put_contents('php://stderr', "Error: Output directory already exists: " . $cli_options['output-dir'] . "\n" );
 	die;
 }
@@ -100,6 +111,10 @@ echo "Copying website structure...\n";
 
 // Copy over the HTML/JS/CSS for the website.
 shell_exec( "cp -r site/* " . escapeshellarg( $cli_options['output-dir'] ) );
+
+if ( $cli_options['update_site'] ) {
+	exit;
+}
 
 $original_export_path = $cli_options['output-dir'];
 $cli_options['output-dir'] .= 'photos/';
