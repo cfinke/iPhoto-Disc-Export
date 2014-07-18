@@ -126,6 +126,7 @@ $library = new \PhotoLibrary\Library( $cli_options['library'] );
 
 $json_events = array();
 $json_photos = array();
+$json_faces = array();
 
 $photo_idx = 1;
 
@@ -214,6 +215,13 @@ foreach ( $all_events as $event ) {
 		foreach ( $photo_faces as $face ) {
 			if ( $name = $face->getName() ) {
 				$face_names[] = $name;
+				
+				if ( ! isset( $json_faces[ $name ] ) ) {
+					$json_faces[ $name ] = array( 'photos' => array() );
+					$json_faces[ $name ]['face_key'] = $face->getKey();
+				}
+				
+				$json_faces[ $name ]['photos'][] = $photo_idx;
 			}
 			else {
 				file_put_contents('php://stderr', "Couldn't find face #" . $face->getKey() . " for photo " . $photo->getCaption() . " (" . $photo->getDateTime()->format( "F j, Y" ) . ")\n" );
@@ -265,7 +273,9 @@ foreach ( $all_events as $event ) {
 
 echo "Writing JS for website...\n";
 
-file_put_contents( $original_export_path . "/data.js", "var events = " . json_encode( $json_events, JSON_PRETTY_PRINT ) . ";\n\nvar photos = " . json_encode( $json_photos, JSON_PRETTY_PRINT ) . ";\n\n" );
+ksort( $json_faces );
+
+file_put_contents( $original_export_path . "/inc/data.js", "var events = " . json_encode( $json_events, JSON_PRETTY_PRINT ) . ";\n\nvar photos = " . json_encode( $json_photos, JSON_PRETTY_PRINT ) . ";\n\nvar faces = " . json_encode( $json_faces, JSON_PRETTY_PRINT ) . ";\n\n" );
 
 echo "Done.\n";
 
