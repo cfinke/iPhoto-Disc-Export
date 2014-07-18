@@ -9,12 +9,8 @@
 		<link rel="stylesheet" href="inc/baskerville.css" type="text/css" media="all">
 		<link rel="stylesheet" href="inc/style.css" type="text/css" media="all">
 		<link rel="stylesheet" href="inc/style-photodisc.css" type="text/css" media="all">
-		<script type="text/javascript" src="inc/modernizr.js"></script>
+		<script type="text/javascript" src="inc/data.js"></script>
 		<script type="text/javascript" src="inc/jquery.js"></script>
-		<script type="text/javascript" src="inc/jquery-migrate.js"></script>
-		<script type="text/javascript" src="inc/jquery.lazyload.js"></script>
-		<script src="data.js" type="text/javascript"></script>
-		<script src="jquery.js" type="text/javascript"></script>
 		<script type="text/html" id="thumbnail-template">
 			<li class="post type-post status-publish format-standard has-post-thumbnail hentry">
 				<div class="gallery-tile lazy">
@@ -87,16 +83,250 @@
 				</main>
 			</div>
 		</div>
+		<script type="text/javascript">
+			var allFacesList = $( '#all-faces-list' );
+			
+			for ( var name in faces ) {
+				allFacesList.append( generate_face( name ) );
+			}
+			
+			function show_events() {
+				$( '.site-title' ).text( 'All Photosets' );
+				
+				document.title = "All Photosets";
+				
+				for ( var i in events ) {
+					var title = events[i].title;
+					
+					var meta = events[i].photos.length + ' photo';
+					
+					if ( events[i].photos.length > 1 ) {
+						meta += 's';
+					}
+					
+					meta += " from " + events[i].dateFriendly;
+					
+					var thumbnail = generate_thumbnail( photos[ events[i].photos[0] ], '#!/event/' + i, title, meta );
+					
+					$( '#thumbnail-container' ).append( thumbnail );
+				}
+				
+				window.scrollTo( 0, 0 );
+			}
+			
+			function show_event( event_id ) {
+				var event_title = events[event_id].title;
+				var page_title = event_title;
+				
+				$( '.site-title' ).text( event_title );
+				
+				if ( ! page_title ) {
+					page_title = "Photoset from " + events[event_id].dateFriendly;
+				}
+				else {
+					page_title = "Photoset: " + page_title;
+				}
+				
+				document.title = page_title;
+				
+				$( '.site-description' ).text( "Photoset: " + events[event_id].dateFriendly );
+
+				for ( var i = 0; i < events[event_id].photos.length; i++ ) {
+					var photo = photos[ events[event_id].photos[i] ];
+					
+					var title = photo.title;
+					
+					var thumbnail = generate_thumbnail( photo, '#!/event/' + event_id + '/photo/' + photo.id, title, photo.description );
+					$( '#thumbnail-container' ).append( thumbnail );
+				}
+				
+				window.scrollTo( 0, 0 );
+			}
+			
+			function show_search( query_string ) {
+				$( '.site-title' ).text( "Search Results" );
+				
+				document.title = "Photo search results: " + query_string;
+				
+				var query = parseSearchQuery( query_string );
+				
+				var resultCount = 0;
+				
+				for ( var i in photos ) {
+					if ( matchesSearch( photos[i].title + " + " + photos[i].description + " + " + photos[i].faces.join( ' + ' ) + " + " + photos[i].date + " + " + photos[i].dateFriendly, query ) ) {
+						var thumbnail = generate_thumbnail( photos[i], '#!/search/' + encodeURIComponent( query_string ) + '/photo/' + photos[i].id, photos[i].title );
+						$( '#thumbnail-container' ).append( thumbnail ); 
+						resultCount++;
+					}
+				}
+				
+				$( '.site-description' ).text( resultCount + ' photo' + ( resultCount == 1 ? '' : 's' ) );
+				
+				window.scrollTo( 0, 0 );
+			}
+			
+			function show_photo( photo_id ) {
+				var photo = photos[photo_id];
+				
+				var page_title = photo.title;
+				
+				if ( ! page_title ) {
+					page_title = photo.description;
+				}
+				
+				if ( ! page_title ) {
+					page_title = "Photo from " + photo.dateFriendly;
+				}
+				else {
+					page_title = "Photo: " + page_title;
+				}
+				
+				document.title = page_title;
+
+				$( '.site-title' ).text( photo.description );
+				$( '.site-description' ).text( photo.dateFriendly );
+				var photo_markup = generate_photo( photo );
+				
+				$( '#permalinks' ).append( photo_markup );
+				
+				$( '#permalinks img' ).css( 'max-height', $( window ).height() - 100 );
+				
+				var faces = photo.faces;
+				
+				if ( faces.length > 0 ) {
+					for ( var i = 0; i < faces.length; i++ ) {
+						var face = generate_face( faces[i] );
+						$( '#faces-list' ).append( face );
+					}
+					
+					$( '#faces-list-container' ).show();
+				}
+				
+				$( '.view-date' ).attr( 'href', '#!/search/' + photo.date );
+				$( '.view-set' ).attr( 'href', '#!/event/' + photo.event_id );
+				$( '.view-full' ).attr( 'href', 'photos/' + photo.path );
+			}
+			
+			function parseSearchQuery( q ) {
+				var queryObject = [];
+				
+				if ( q ) {
+					q = q.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+					
+					var qParts = [];
+		
+					// We now have a space delimited string, but it may included quoted phrases
+					var currentQ = "";
+					var inQuotes = 0;
+		
+					for (var i = 0; i < q.length; i++) {
+						var theChar = q.charAt(i);
+			
+						if (theChar == "'" || theChar == '"') {
+							if (inQuotes == theChar) {
+								inQuotes = false;
+							}
+							else if (currentQ.length == 0 || (currentQ.length == 1 && (currentQ == "-"))){
+								inQuotes = theChar;
+							}
+							else {
+								currentQ += theChar;
+							}
+						}
+						else if (theChar == "+" && currentQ.length == 0) {
+						}
+						else {
+							if (theChar == " "){ 
+								if (!inQuotes) {
+									qParts.push(currentQ);
+									currentQ = "";
+									continue;
+								}
+							}
+				
+							currentQ += q.charAt(i);
+						}
+					}
+		
+					if (currentQ != "") qParts.push(currentQ);
+		
+					for (var i = 0; i < qParts.length; i++) {
+						var nomatch = false;
+			
+						if (qParts[i].charAt(0) == '-') {
+							qParts[i] = qParts[i].substring(1);
+							nomatch = true;
+						}
+			
+						if (qParts[i]) {
+							queryObject.push( { "nomatch" : nomatch, "regex" : new RegExp(qParts[i], "i") } );
+						}
+					}
+				}
+				
+				return queryObject;
+			}
+			
+			function matchesSearch(str, search) {
+				if (search.length == 0) {
+					return true;
+				}
+				else {
+					for (var i = 0; i < search.length; i++) {
+						if (search[i].nomatch) {
+							if (str.match(search[i].regex)) {
+								return false;
+							}
+						}
+						else {
+							if (!str.match(search[i].regex)) {
+								return false;
+							}
+						}
+					}
+				}
+	
+				return true;
+			}
+			
+			function generate_thumbnail( photo, link, title, meta ) {
+				var template = $( $( '#thumbnail-template' ).html() );
+				
+				template.find( '.gallery-tile' ).attr( 'data-original', 'photos/' + photo.thumb_path );
+				template.find( 'a' ).attr( 'href', link );
+				template.find( '.post-title' ).text( title );
+				template.find( '.post-meta' ).text( meta );
+				
+				return template;
+			}
+			
+			function generate_photo( photo ) {
+				var template = $( $( '#photo-template' ).html() );
+				template.find( 'img' ).attr( 'src', 'photos/' + photo.path );
+				template.find( 'a' ).attr( 'href', 'photos/' + photo.path );
+				return template;
+			}
+			
+			function generate_face( face ) {
+				var template = $( $( '#face-in-this-photo-template' ).html() );
+				template.find( 'a' ).text( face ).attr( 'href', '#!/search/' + encodeURIComponent( '"' + face + '"' ) );
+				return template;
+			}
+		</script>
+		<script type="text/javascript" src="inc/jquery-migrate.js"></script>
+		<script type="text/javascript" src="inc/modernizr.js"></script>
 		<script type="text/javascript" src="inc/navigation.js"></script>
 		<script type="text/javascript" src="inc/skip-link-focus-fix.js"></script>
 		<script type="text/javascript" src="inc/FitText.js"></script>
 		<script type="text/javascript" src="inc/_pxu.js"></script>
 		<script type="text/javascript" src="inc/theme.js"></script>
+		<script type="text/javascript" src="inc/jquery.lazyload.js"></script>
 		<script type="text/javascript">
 			$( function () {
-				
 				$( window ).on( 'hashchange', function ( e ) {
 					var hash = window.location.hash;
+					
+					document.title = 'Photos';
 					
 					$( 'body' ).removeClass( 'events' ).removeClass( 'event' ).removeClass( 'search' ).removeClass( 'photo' );
 					
@@ -138,208 +368,16 @@
 					}
 					
 					$( ".lazy" ).lazyload();
+					$( window ).trigger( 'resize' );
 				} );
 				
 				$( window ).trigger( 'hashchange' );
-				
 				
 				$( '.search-form' ).on( 'submit', function ( e ) {
 					e.preventDefault();
 					
 					document.location.href = '#!/search/' + encodeURIComponent( $( this ).find( '.search-field:first' ).val() );
 				} );
-				
-				function show_events( ) {
-					$( '.site-title' ).text( 'All Photosets' );
-					
-					for ( var i in events ) {
-						var title = events[i].title;
-						
-						var meta = events[i].photos.length + ' photo';
-						
-						if ( events[i].photos.length > 1 ) {
-							meta += 's';
-						}
-						
-						meta += " from " + events[i].dateFriendly;
-						
-						var thumbnail = generate_thumbnail( photos[ events[i].photos[0] ], '#!/event/' + i, title, meta );
-						
-						$( '#thumbnail-container' ).append( thumbnail );
-					}
-					
-					window.scrollTo( 0, 0 );
-				}
-				
-				function show_event( event_id ) {
-					var event_title = events[event_id].title;
-					$( '.site-title' ).text( event_title );
-					$( '.site-description' ).text( "Photoset: " + events[event_id].dateFriendly );
-
-					for ( var i = 0; i < events[event_id].photos.length; i++ ) {
-						var photo = photos[ events[event_id].photos[i] ];
-						
-						var title = photo.title;
-						
-						var thumbnail = generate_thumbnail( photo, '#!/event/' + event_id + '/photo/' + photo.id, title, photo.description );
-						$( '#thumbnail-container' ).append( thumbnail );
-					}
-					
-					window.scrollTo( 0, 0 );
-				}
-				
-				function show_search( query_string ) {
-					$( '.site-title' ).text( "Search Results" );
-					
-					var query = parseSearchQuery( query_string );
-					
-					var resultCount = 0;
-					
-					for ( var i in photos ) {
-						if ( matchesSearch( photos[i].title + " + " + photos[i].description + " + " + photos[i].faces.join( ' + ' ) + " + " + photos[i].date + " + " + photos[i].dateFriendly, query ) ) {
-							var thumbnail = generate_thumbnail( photos[i], '#!/search/' + encodeURIComponent( query_string ) + '/photo/' + photos[i].id, photos[i].title );
-							$( '#thumbnail-container' ).append( thumbnail ); 
-							resultCount++;
-						}
-					}
-					
-					$( '.site-description' ).text( resultCount + ' photo' + ( resultCount == 1 ? '' : 's' ) );
-					
-					window.scrollTo( 0, 0 );
-				}
-				
-				function show_photo( photo_id ) {
-					var photo = photos[photo_id];
-
-					$( '.site-title' ).text( photo.description );
-					$( '.site-description' ).text( photo.dateFriendly );
-					var photo_markup = generate_photo( photo );
-					
-					$( '#permalinks' ).append( photo_markup );
-					
-					$( '#permalinks img' ).css( 'max-height', $( window ).height() - 100 );
-					
-					var faces = photo.faces;
-					
-					if ( faces.length > 0 ) {
-						for ( var i = 0; i < faces.length; i++ ) {
-							var face = generate_face( faces[i] );
-							$( '#faces-list' ).append( face );
-						}
-						
-						$( '#faces-list-container' ).show();
-					}
-					
-					$( '.view-date' ).attr( 'href', '#!/search/' + photo.date );
-					$( '.view-set' ).attr( 'href', '#!/event/' + photo.event_id );
-					$( '.view-full' ).attr( 'href', 'photos/' + photo.path );
-				}
-				
-				function parseSearchQuery( q ) {
-					var queryObject = [];
-					
-					if ( q ) {
-						q = q.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
-						
-						var qParts = [];
-			
-						// We now have a space delimited string, but it may included quoted phrases
-						var currentQ = "";
-						var inQuotes = 0;
-			
-						for (var i = 0; i < q.length; i++) {
-							var theChar = q.charAt(i);
-				
-							if (theChar == "'" || theChar == '"') {
-								if (inQuotes == theChar) {
-									inQuotes = false;
-								}
-								else if (currentQ.length == 0 || (currentQ.length == 1 && (currentQ == "-"))){
-									inQuotes = theChar;
-								}
-								else {
-									currentQ += theChar;
-								}
-							}
-							else if (theChar == "+" && currentQ.length == 0) {
-							}
-							else {
-								if (theChar == " "){ 
-									if (!inQuotes) {
-										qParts.push(currentQ);
-										currentQ = "";
-										continue;
-									}
-								}
-					
-								currentQ += q.charAt(i);
-							}
-						}
-			
-						if (currentQ != "") qParts.push(currentQ);
-			
-						for (var i = 0; i < qParts.length; i++) {
-							var nomatch = false;
-				
-							if (qParts[i].charAt(0) == '-') {
-								qParts[i] = qParts[i].substring(1);
-								nomatch = true;
-							}
-				
-							if (qParts[i]) {
-								queryObject.push( { "nomatch" : nomatch, "regex" : new RegExp(qParts[i], "i") } );
-							}
-						}
-					}
-					
-					return queryObject;
-				}
-				
-				function matchesSearch(str, search) {
-					if (search.length == 0) {
-						return true;
-					}
-					else {
-						for (var i = 0; i < search.length; i++) {
-							if (search[i].nomatch) {
-								if (str.match(search[i].regex)) {
-									return false;
-								}
-							}
-							else {
-								if (!str.match(search[i].regex)) {
-									return false;
-								}
-							}
-						}
-					}
-		
-					return true;
-				}
-				
-				function generate_thumbnail( photo, link, title, meta ) {
-					var template = $( $( '#thumbnail-template' ).html() );
-					
-					template.find( '.gallery-tile' ).attr( 'data-original', 'photos/' + photo.thumb_path );
-					template.find( 'a' ).attr( 'href', link );
-					template.find( '.post-title' ).text( title );
-					template.find( '.post-meta' ).text( meta );
-					
-					return template;
-				}
-				
-				function generate_photo( photo ) {
-					var template = $( $( '#photo-template' ).html() );
-					template.find( 'img' ).attr( 'src', 'photos/' + photo.path );
-					template.find( 'a' ).attr( 'href', 'photos/' + photo.path );
-					return template;
-				}
-				
-				function generate_face( face ) {
-					var template = $( $( '#face-in-this-photo-template' ).html() );
-					template.find( 'a' ).text( face ).attr( 'href', '#!/search/' + encodeURIComponent( '"' + face + '"' ) );
-					return template;
-				}
 			} );
 		</script>
 	</body>
