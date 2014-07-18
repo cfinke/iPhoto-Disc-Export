@@ -151,10 +151,11 @@ function sort_events( $a, $b ) {
 
 usort( $all_events, 'sort_events' );
 
-foreach ( $all_events as $event ) {
-	echo "Processing event: " . $event->getName() . "...\n";
-	
+foreach ( $all_events as $event_counter => $event ) {
 	$event_idx = count( $json_events ) + 1;
+	
+	echo "Processing event #" . ( $event_counter + 1 ) . "/" . count( $all_events ) . ": " . $event->getName() . "...\n";
+	
 	$event_photos = array();
 	
 	// For each event, generate a folder with the date, name, and index.
