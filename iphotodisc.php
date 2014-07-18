@@ -175,11 +175,6 @@ foreach ( $all_events as $event_counter => $event ) {
 		$event_name = '';
 	}
 	
-	// Ignore event titles that are just scanner/camera defaults.
-	if ( preg_match( "/^(Scan|PD_)/", $event_name ) ) {
-		$event_name = '';
-	}
-	
 	$event_folder = get_export_folder_name( $event_date, $event_name );
 	$thumb_folder = get_export_thumb_folder_name( $event_folder );
 	
@@ -199,11 +194,6 @@ foreach ( $all_events as $event_counter => $event ) {
 		$photo_filename .= " - " . str_pad( $idx, strlen( (string) $photo_count ), "0", STR_PAD_LEFT );
 		
 		$title = trim( $photo->getCaption() );
-		
-		// Ignore photo titles that are just scanner/camera defaults.
-		if ( preg_match( "/^(Scan|PD_)/", $title ) ) {
-			$title = '';
-		}
 		
 		if ( $title ) {
 			$photo_filename .= " - " . str_replace( "/", "-", $title );
