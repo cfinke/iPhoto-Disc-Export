@@ -7,7 +7,7 @@ require "lib/PhotoLibrary/Library.php";
 require "lib/PhotoLibrary/Photo.php";
 require "lib/PhotoLibrary/Face.php";
 
-$cli_options = getopt( "l::o::js:u", array( 'library::', 'output-dir::', 'jpegrescan', 'start-date:', 'update_site' ) );
+$cli_options = getopt( "l::o::js:u", array( 'library::', 'output-dir::', 'jpegrescan', 'start_date:', 'update_site' ) );
 
 if ( isset( $cli_options['l'] ) ) {
 	$cli_options['library'] = $cli_options['l'];
@@ -22,15 +22,15 @@ if ( isset( $cli_options['j'] ) || isset( $cli_options['jpegrescan'] ) ) {
 }
 
 if ( isset( $cli_options['s'] ) ) {
-	$cli_options['start-date'] = $cli_options['s'];
+	$cli_options['start_date'] = $cli_options['s'];
 }
 
-if ( isset( $cli_options['start-date'] ) ) {
-	$cli_options['start-date'] = date( 'Y-m-d', strtotime( $cli_options['start-date'] ) );
+if ( isset( $cli_options['start_date'] ) ) {
+	$cli_options['start_date'] = date( 'Y-m-d', strtotime( $cli_options['start_date'] ) );
 }
 
-if ( ! isset( $cli_options['start-date'] ) || ! $cli_options['start-date'] ) {
-	$cli_options['start-date'] = false;
+if ( ! isset( $cli_options['start_date'] ) || ! $cli_options['start_date'] ) {
+	$cli_options['start_date'] = false;
 }
 
 if ( isset( $cli_options['u'] ) ) {
@@ -45,7 +45,7 @@ else {
 }
 
 if ( empty( $cli_options['library'] ) || empty( $cli_options['output-dir'] ) ) {
-	file_put_contents('php://stderr', "Usage: ./iphotodisc.php --library=/path/to/photo/library --output-dir=/path/for/exported/files [--jpegrescan --start-date=1950-01-01]\n" );
+	file_put_contents('php://stderr', "Usage: ./iphotodisc.php --library=/path/to/photo/library --output-dir=/path/for/exported/files [--jpegrescan --start_date=1950-01-01]\n" );
 	die;
 }
 
@@ -164,7 +164,7 @@ foreach ( $all_events as $event_counter => $event ) {
 	
 	$event_date = get_event_date( $event );
 	
-	if ( $cli_options['start-date'] && $event_date < $cli_options['start-date'] ) {
+	if ( $cli_options['start_date'] && $event_date < $cli_options['start_date'] ) {
 		continue;
 	}
 	
