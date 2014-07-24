@@ -62,7 +62,7 @@ function sort_photos_by_date( $a, $b ) {
 	return $a->getDateTime()->format( "U" ) < $b->getDateTime()->format( "U" ) ? -1 : 1;
 }
 
-function get_export_folder_name( $date, $title ) {
+function get_export_folder_name( $date, $title, $folders ) {
 	global $cli_options;
 	
 	$title = str_replace( "/", "-", $title );
@@ -75,13 +75,13 @@ function get_export_folder_name( $date, $title ) {
 	
 	$folder_basis = preg_replace( '/[^a-zA-Z0-9 \(\)\.,\-]/', '', $folder_basis );
 	
-	if ( ! file_exists( $cli_options['output-dir'] . $folder_basis ) ) {
+	if ( ! in_array( $cli_options['output-dir'] . $folder_basis . "/", $folders ) ) {
 		return $cli_options['output-dir'] . $folder_basis . "/";
 	}
 	else {
 		$suffix = 2;
 		
-		while ( file_exists( $cli_options['output-dir'] . $folder_basis . " - " . str_pad( $suffix, 2, "0", STR_PAD_LEFT ) ) ) {
+		while ( in_array( $cli_options['output-dir'] . $folder_basis . " - " . str_pad( $suffix, 2, "0", STR_PAD_LEFT ) . "/", $folders ) ) {
 			$suffix++;
 		}
 		
@@ -102,10 +102,6 @@ if ( ! file_exists( $cli_options['output-dir'] ) ) {
 		die;
 	}
 }
-else if ( ! $cli_options['update_site'] ) {
-	file_put_contents('php://stderr', "Error: Output directory already exists: " . $cli_options['output-dir'] . "\n" );
-	die;
-}
 
 echo "Copying website structure...\n";
 
@@ -119,8 +115,13 @@ if ( $cli_options['update_site'] ) {
 $original_export_path = $cli_options['output-dir'];
 $cli_options['output-dir'] .= 'photos/';
 
-mkdir( $cli_options['output-dir'] );
-mkdir( $cli_options['output-dir'] . "thumbnails/" );
+if ( ! file_exists( $cli_options['output-dir'] ) ) {
+	mkdir( $cli_options['output-dir'] );
+}
+
+if ( ! file_exists( $cli_options['output-dir'] . 'thumbnails/' ) ) {
+	mkdir( $cli_options['output-dir'] . "thumbnails/" );
+}
 
 $library = new \PhotoLibrary\Library( $cli_options['library'] );
 
@@ -151,6 +152,8 @@ function sort_events( $a, $b ) {
 
 usort( $all_events, 'sort_events' );
 
+$folders = array();
+
 foreach ( $all_events as $event_counter => $event ) {
 	$event_idx = count( $json_events ) + 1;
 	
@@ -175,7 +178,10 @@ foreach ( $all_events as $event_counter => $event ) {
 		$event_name = '';
 	}
 	
-	$event_folder = get_export_folder_name( $event_date, $event_name );
+	$event_folder = get_export_folder_name( $event_date, $event_name, $folders );
+	
+	$folders[] = $event_folder;
+	
 	$thumb_folder = get_export_thumb_folder_name( $event_folder );
 	
 	if ( ! is_dir( $event_folder ) ) {
