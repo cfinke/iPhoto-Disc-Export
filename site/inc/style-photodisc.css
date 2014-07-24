@@ -175,3 +175,13 @@ body.photo .site-title:not(:empty):after {
 #gallery ul .gallery-tile {
 	background-size: contain;
 }
+
+#gallery ul li {
+	float: none;
+	display: inline-block;
+	vertical-align: top;
+}
+
+header.site-header, header.site-header > div {
+	min-height: 100%;
+}

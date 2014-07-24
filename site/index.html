@@ -368,10 +368,10 @@
 					}
 					
 					$( ".lazy" ).lazyload();
-					$( window ).trigger( 'resize' );
 				} );
 				
 				$( window ).trigger( 'hashchange' );
+				$( window ).trigger( 'resize' );
 				
 				$( '.search-form' ).on( 'submit', function ( e ) {
 					e.preventDefault();
