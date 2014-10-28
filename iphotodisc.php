@@ -218,7 +218,7 @@ foreach ( $all_events as $event_counter => $event ) {
 					$json_faces[ $name ]['face_key'] = $face->getKey();
 				}
 				
-				$json_faces[ $name ]['photos'][] = $photo_idx;
+				$json_faces[ $name ]['photos'][$photo_idx] = $face->getCoordinates();
 			}
 			else {
 				file_put_contents('php://stderr', "Couldn't find face #" . $face->getKey() . " for photo " . $photo->getCaption() . " (" . $photo->getDateTime()->format( "F j, Y" ) . ")\n" );

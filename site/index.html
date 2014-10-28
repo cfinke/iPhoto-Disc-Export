@@ -195,7 +195,7 @@
 				
 				if ( faces.length > 0 ) {
 					for ( var i = 0; i < faces.length; i++ ) {
-						var face = generate_face( faces[i] );
+						var face = generate_face( faces[i], photo_id );
 						$( '#faces-list' ).append( face );
 					}
 					
@@ -307,10 +307,43 @@
 				return template;
 			}
 			
-			function generate_face( face ) {
+			function generate_face( face, photo_id ) {
 				var template = $( $( '#face-in-this-photo-template' ).html() );
-				template.find( 'a' ).text( face ).attr( 'href', '#!/search/' + encodeURIComponent( '"' + face + '"' ) );
+				var templateLink = template.find( 'a' );
+
+				templateLink
+					.text( face )
+					.attr( 'href', '#!/search/' + encodeURIComponent( '"' + face + '"' ) );
+
+				if ( photo_id ) {
+					templateLink.data( 'coordinates', faces[ face ]['photos'][photo_id] );
+				}
+
 				return template;
+			}
+
+			function drawFaceBox( coordinates ) {
+				var image = $( 'img.featured-image' );
+				var imageWidth = image.width();
+				var imageHeight = image.height();
+
+				var imageOffset = image.offset();
+
+				var boxHeight = Math.round( imageHeight * coordinates[3] );
+				var boxWidth = Math.round( imageWidth * coordinates[2] );
+
+				var boxLeft = Math.round( imageOffset.left + ( imageWidth * coordinates[0] ) );
+				var boxBottom = Math.round( imageOffset.top + ( imageHeight - ( imageHeight * coordinates[1] ) ) );
+				var boxTop = boxBottom - boxHeight;
+
+				var box = $( '<div/>' ).addClass( 'face-box' ).css( {
+					'width': boxWidth + 'px',
+					'height': boxHeight + 'px',
+					'top': boxTop + 'px',
+					'left': boxLeft + 'px'
+				} );
+
+				$( 'body' ).append( box );
 			}
 		</script>
 		<script type="text/javascript" src="inc/jquery-migrate.js"></script>
@@ -377,6 +410,14 @@
 					e.preventDefault();
 					
 					document.location.href = '#!/search/' + encodeURIComponent( $( this ).find( '.search-field:first' ).val() );
+				} );
+
+				$( document ).on( 'mouseover', 'body.photo #faces-list a', function ( e ) {
+					drawFaceBox( $( this ).data( 'coordinates' ) );
+				} );
+
+				$( document ).on( 'mouseout', 'body.photo #faces-list a', function ( e ) {
+					$( '.face-box' ).remove();
 				} );
 			} );
 		</script>

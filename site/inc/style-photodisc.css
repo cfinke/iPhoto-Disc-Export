@@ -185,3 +185,9 @@ body.photo .site-title:not(:empty):after {
 header.site-header, header.site-header > div {
 	min-height: 100%;
 }
+
+.face-box {
+	position: absolute;
+	border: 1px solid #fff;
+	box-shadow: 0 0 1px 1px #fff;
+}

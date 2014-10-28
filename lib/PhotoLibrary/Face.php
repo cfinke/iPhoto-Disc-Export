@@ -24,7 +24,7 @@ class Face
 
     /**
      * Array of the location coordinates: x, y, width, height.
-     * x and y are the lower left corner of the face.
+     * x and y are the lower left corner of the face, as relative percentages from the lower left of the image.
      *
      * @var array
      */
@@ -84,4 +84,14 @@ class Face
 
          return $this->name;
      }
+
+    /**
+     * Get the coordinates of this face.
+     *
+     * @return array [ x-value of lower left corner, y-value of lower-left corner, width, height ]
+     */
+    public function getCoordinates()
+    {
+        return $this->coordinates;
+    }
 }
