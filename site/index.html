@@ -153,7 +153,7 @@
 				var resultCount = 0;
 				
 				for ( var i in photos ) {
-					if ( matchesSearch( photos[i].title + " + " + photos[i].description + " + " + photos[i].faces.join( ' + ' ) + " + " + photos[i].date + " + " + photos[i].dateFriendly, query ) ) {
+					if ( matchesSearch( photos[i], query ) ) {
 						var thumbnail = generate_thumbnail( photos[i], '#!/search/' + encodeURIComponent( query_string ) + '/photo/' + photos[i].id, photos[i].title );
 						$( '#thumbnail-container' ).append( thumbnail ); 
 						resultCount++;
@@ -259,7 +259,7 @@
 						}
 			
 						if (qParts[i]) {
-							queryObject.push( { "nomatch" : nomatch, "regex" : new RegExp(qParts[i], "i") } );
+							queryObject.push( { "str" : qParts[i], "nomatch" : nomatch, "regex" : new RegExp(qParts[i], "i") } );
 						}
 					}
 				}
@@ -267,13 +267,22 @@
 				return queryObject;
 			}
 			
-			function matchesSearch(str, search) {
+			function matchesSearch(photo, search) {
+				var str = photo.title + " + " + photo.description + " + " + photo.faces.join( ' + ' ) + " + " + photo.date + " + " + photo.dateFriendly;
+
 				if (search.length == 0) {
 					return true;
 				}
 				else {
 					for (var i = 0; i < search.length; i++) {
-						if (search[i].nomatch) {
+						if (search[i].str.match( /^people:[0-9]+$/ ) ) {
+							var peopleCount = search[i].str.replace( 'people:', '' );
+
+							if ( parseInt( peopleCount, 10 ) != photo.faces.length ) {
+								return false;
+							}
+						}
+						else if (search[i].nomatch) {
 							if (str.match(search[i].regex)) {
 								return false;
 							}
