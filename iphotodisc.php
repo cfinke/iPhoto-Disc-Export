@@ -49,14 +49,24 @@ if ( empty( $cli_options['library'] ) || empty( $cli_options['output-dir'] ) ) {
 	die;
 }
 
-if ( ! file_exists( $cli_options['library'] ) ) {
-	file_put_contents('php://stderr', "Error: Library does not exist (" . $cli_options['library'] . ")\n" );
-	die;
+if ( ! is_array( $cli_options['library'] ) ) {
+	$cli_options['library'] = array( $cli_options['library'] );
 }
 
-// Ensure the paths ends with a slash.
+$cli_options['library'] = array_unique( $cli_options['library'] );
+
+foreach ( $cli_options['library'] as $idx => $library ) {
+	if ( ! file_exists( $library ) ) {
+		file_put_contents('php://stderr', "Error: Library does not exist (" . $library . ")\n" );
+		die;
+	}
+
+	// Ensure the paths end with a slash.
+	$cli_options['library'][$idx] = rtrim( $library, '/' ) . '/';
+}
+
+// Ensure the output dir path ends with a slash.
 $cli_options['output-dir'] = rtrim( $cli_options['output-dir'], '/' ) . '/';
-$cli_options['library'] = rtrim( $cli_options['library'], '/' ) . '/';
 
 function sort_photos_by_date( $a, $b ) {
 	return $a->getDateTime()->format( "U" ) < $b->getDateTime()->format( "U" ) ? -1 : 1;
@@ -123,149 +133,143 @@ if ( ! file_exists( $cli_options['output-dir'] . 'thumbnails/' ) ) {
 	mkdir( $cli_options['output-dir'] . "thumbnails/" );
 }
 
-$library = new \PhotoLibrary\Library( $cli_options['library'] );
-
 $json_events = array();
 $json_photos = array();
 $json_faces = array();
 
 $photo_idx = 1;
 
-echo "Finding events...\n";
+foreach ( $cli_options['library'] as $library_path ) {
+	echo "Processing " . $library_path . "...\n";
 
-// Get all the events and sort them.
-$all_events = $library->getAlbumsOfType( 'Event' );
+	$library = new \PhotoLibrary\Library( $library_path );
 
-echo "Found " . count( $all_events ) . " events\n";
+	echo "Finding events...\n";
 
-function get_event_date( $event ) {
-	$photos = $event->getPhotos();
-	
-	usort( $photos, 'sort_photos_by_date' );
-	
-	return $photos[0]->getDateTime()->format( "Y-m-d" );
-}
+	// Get all the events and sort them.
+	$all_events = $library->getAlbumsOfType( 'Event' );
 
-function sort_events( $a, $b ) {
-	return ( get_event_date( $a ) < get_event_date( $b ) ? -1 : 1 );
-}
+	echo "Found " . count( $all_events ) . " events\n";
 
-usort( $all_events, 'sort_events' );
+	usort( $all_events, 'sort_events' );
 
-$folders = array();
+	$folders = array();
 
-foreach ( $all_events as $event_counter => $event ) {
-	$event_idx = count( $json_events ) + 1;
-	
-	echo "Processing event #" . ( $event_counter + 1 ) . "/" . count( $all_events ) . ": " . $event->getName() . "...\n";
-	
-	$event_photos = array();
-	
-	// For each event, generate a folder with the date, name, and index.
-	$photos = $event->getPhotos();
-	usort( $photos, 'sort_photos_by_date' );
-	
-	$event_date = get_event_date( $event );
-	
-	if ( $cli_options['start_date'] && $event_date < $cli_options['start_date'] ) {
-		continue;
-	}
-	
-	$event_name = $event->getName();
-	
-	// Ignore event names that are defaults from the event date: Feb 3, 1995
-	if ( preg_match( "/^[a-z]{3} [0-9]{1,2}, [0-9]{4}$/i", $event_name ) ) {
-		$event_name = '';
-	}
-	
-	$event_folder = get_export_folder_name( $event_date, $event_name, $folders );
-	
-	$folders[] = $event_folder;
-	
-	$thumb_folder = get_export_thumb_folder_name( $event_folder );
-	
-	if ( ! is_dir( $event_folder ) ) {
-		mkdir( $event_folder );
-	}
-	
-	if ( ! is_dir( $thumb_folder ) ) {
-		mkdir( $thumb_folder );
-	}
-	
-	$idx = 1;
-	$photo_count = count( $json_photos );
-	
-	foreach ( $photos as $photo ) {
-		$photo_filename = $photo->getDateTime()->format( "Y-m-d H-i-s" );
-		$photo_filename .= " - " . str_pad( $idx, strlen( (string) $photo_count ), "0", STR_PAD_LEFT );
-		
-		$title = trim( $photo->getCaption() );
-		
-		if ( $title ) {
-			$photo_filename .= " - " . str_replace( "/", "-", $title );
+	foreach ( $all_events as $event_counter => $event ) {
+		$event_idx = count( $json_events ) + 1;
+
+		echo "Processing event #" . ( $event_counter + 1 ) . "/" . count( $all_events ) . ": " . $event->getName() . "...\n";
+
+		$event_photos = array();
+
+		// For each event, generate a folder with the date, name, and index.
+		$photos = $event->getPhotos();
+		usort( $photos, 'sort_photos_by_date' );
+
+		$event_date = get_event_date( $event );
+
+		if ( $cli_options['start_date'] && $event_date < $cli_options['start_date'] ) {
+			continue;
 		}
-		
-		$face_names = array();
-		
-		$photo_faces = $photo->getFaces();
-		
-		foreach ( $photo_faces as $face ) {
-			if ( $name = $face->getName() ) {
-				$face_names[] = $name;
-				
-				if ( ! isset( $json_faces[ $name ] ) ) {
-					$json_faces[ $name ] = array( 'photos' => array() );
-					$json_faces[ $name ]['face_key'] = $face->getKey();
+
+		$event_name = $event->getName();
+
+		// Ignore event names that are defaults from the event date: Feb 3, 1995
+		if ( preg_match( "/^[a-z]{3} [0-9]{1,2}, [0-9]{4}$/i", $event_name ) ) {
+			$event_name = '';
+		}
+
+		$event_folder = get_export_folder_name( $event_date, $event_name, $folders );
+
+		$folders[] = $event_folder;
+
+		$thumb_folder = get_export_thumb_folder_name( $event_folder );
+
+		if ( ! is_dir( $event_folder ) ) {
+			mkdir( $event_folder );
+		}
+
+		if ( ! is_dir( $thumb_folder ) ) {
+			mkdir( $thumb_folder );
+		}
+
+		$idx = 1;
+		$photo_count = count( $json_photos );
+
+		foreach ( $photos as $photo ) {
+			$photo_filename = $photo->getDateTime()->format( "Y-m-d H-i-s" );
+			$photo_filename .= " - " . str_pad( $idx, strlen( (string) $photo_count ), "0", STR_PAD_LEFT );
+
+			$title = trim( $photo->getCaption() );
+
+			if ( $title ) {
+				$photo_filename .= " - " . str_replace( "/", "-", $title );
+			}
+
+			$face_names = array();
+
+			$photo_faces = $photo->getFaces();
+
+			foreach ( $photo_faces as $face ) {
+				if ( $name = $face->getName() ) {
+					if ( ! in_array( $name, $face_names ) ) {
+						$face_names[] = $name;
+
+						if ( ! isset( $json_faces[ $name ] ) ) {
+							$json_faces[ $name ] = array( 'photos' => array() );
+							$json_faces[ $name ]['face_key'] = $face->getKey();
+						}
+
+						$json_faces[ $name ]['photos'][$photo_idx] = $face->getCoordinates();
+					}
 				}
-				
-				$json_faces[ $name ]['photos'][$photo_idx] = $face->getCoordinates();
+				else {
+					file_put_contents('php://stderr', "Couldn't find face #" . $face->getKey() . " for photo " . $photo->getCaption() . " (" . $photo->getDateTime()->format( "F j, Y" ) . ")\n" );
+				}
 			}
-			else {
-				file_put_contents('php://stderr', "Couldn't find face #" . $face->getKey() . " for photo " . $photo->getCaption() . " (" . $photo->getDateTime()->format( "F j, Y" ) . ")\n" );
+
+			$photo_path = $photo->getPath();
+			$tmp = explode( ".", $photo_path );
+			$photo_extension = array_pop( $tmp );
+
+			$photo_filename = preg_replace( '/[^a-zA-Z0-9 \(\)\.,\-]/', '', $photo_filename );
+
+			$photo_filename .= "." . $photo_extension;
+
+			$photoTimestamp = (int) $photo->getDateTime()->format( "U" );
+			$localPhotoTimestamp = $photoTimestamp + (5 * 60 * 60);
+
+			if ( ! file_exists( $event_folder . $photo_filename ) ) {
+				copy( $photo->getPath(), $event_folder . $photo_filename );
+
+				if ( isset( $cli_options['jpegrescan'] ) ) {
+					shell_exec( "jpegrescan " . escapeshellarg( $event_folder . $photo_filename ) . " " . escapeshellarg( $event_folder . $photo_filename ) . " > /dev/null 2>&1" );
+				}
+
+				shell_exec( "touch -mt " . escapeshellarg( date( "YmdHi.s", $localPhotoTimestamp ) ) . " " . escapeshellarg( $event_folder . $photo_filename ) . " > /dev/null 2>&1" );
+
 			}
+
+			if ( ! file_exists( $thumb_folder . "thumb_" . $photo_filename ) ) {
+				shell_exec( "sips -Z 300 " . escapeshellarg( $event_folder . $photo_filename ) . " --out " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " 2> /dev/null" );
+
+				if ( isset( $cli_options['jpegrescan'] ) ) {
+					shell_exec( "jpegrescan " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " > /dev/null 2>&1"  );
+				}
+
+				shell_exec( "touch -mt " . escapeshellarg( date( "YmdHi.s", $localPhotoTimestamp ) ) . " " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " > /dev/null 2>&1" );
+			}
+
+			$idx++;
+
+			$json_photos[ $photo_idx ] = array( 'id' => $photo_idx, 'path' => str_replace( $cli_options['output-dir'], '', $event_folder . $photo_filename ), 'thumb_path' => str_replace( $cli_options['output-dir'], '', $thumb_folder . "thumb_" . $photo_filename ), 'event_id' => $event_idx, 'title' => $title, 'description' => $title/* . "\n\n" . trim( $photo->getDescription() )*/, 'faces' => $face_names, 'date' => date( "Y-m-d", $photoTimestamp ), 'dateFriendly' => date( "F j, Y", $photoTimestamp ) );
+			$event_photos[] = $photo_idx;
+
+			$photo_idx++;
 		}
-		
-		$photo_path = $photo->getPath();
-		$tmp = explode( ".", $photo_path );
-		$photo_extension = array_pop( $tmp );
-		
-		$photo_filename = preg_replace( '/[^a-zA-Z0-9 \(\)\.,\-]/', '', $photo_filename );
-		
-		$photo_filename .= "." . $photo_extension;
-		
-		$photoTimestamp = (int) $photo->getDateTime()->format( "U" );
-		$localPhotoTimestamp = $photoTimestamp + (5 * 60 * 60);
-		
-		if ( ! file_exists( $event_folder . $photo_filename ) ) {
-			copy( $photo->getPath(), $event_folder . $photo_filename );
-			
-			if ( isset( $cli_options['jpegrescan'] ) ) {
-				shell_exec( "jpegrescan " . escapeshellarg( $event_folder . $photo_filename ) . " " . escapeshellarg( $event_folder . $photo_filename ) . " > /dev/null 2>&1" );
-			}
-			
-			shell_exec( "touch -mt " . escapeshellarg( date( "YmdHi.s", $localPhotoTimestamp ) ) . " " . escapeshellarg( $event_folder . $photo_filename ) . " > /dev/null 2>&1" );
-			
-		}
-		
-		if ( ! file_exists( $thumb_folder . "thumb_" . $photo_filename ) ) {
-			shell_exec( "sips -Z 300 " . escapeshellarg( $event_folder . $photo_filename ) . " --out " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " 2> /dev/null" );
-			
-			if ( isset( $cli_options['jpegrescan'] ) ) {
-				shell_exec( "jpegrescan " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " > /dev/null 2>&1"  );
-			}
-			
-			shell_exec( "touch -mt " . escapeshellarg( date( "YmdHi.s", $localPhotoTimestamp ) ) . " " . escapeshellarg( $thumb_folder . "thumb_" . $photo_filename ) . " > /dev/null 2>&1" );
-		}
-		
-		$idx++;
-		
-		$json_photos[ $photo_idx ] = array( 'id' => $photo_idx, 'path' => str_replace( $cli_options['output-dir'], '', $event_folder . $photo_filename ), 'thumb_path' => str_replace( $cli_options['output-dir'], '', $thumb_folder . "thumb_" . $photo_filename ), 'event_id' => $event_idx, 'title' => $title, 'description' => trim( $photo->getDescription() ), 'faces' => $face_names, 'date' => date( "Y-m-d", $photoTimestamp ), 'dateFriendly' => date( "F j, Y", $photoTimestamp ) );
-		$event_photos[] = $photo_idx;
-		
-		$photo_idx++;
+
+		$json_events[ $event_idx ] = array( 'id' => $event_idx, 'title' => trim( $event_name ), 'date' => $event_date, 'dateFriendly' => date( "F j, Y", strtotime( $event_date ) ), 'photos' => $event_photos );
 	}
-	
-	$json_events[ $event_idx ] = array( 'id' => $event_idx, 'title' => trim( $event_name ), 'date' => $event_date, 'dateFriendly' => date( "F j, Y", strtotime( $event_date ) ), 'photos' => $event_photos );
 }
 
 echo "Writing JS for website...\n";
@@ -276,3 +280,14 @@ file_put_contents( $original_export_path . "/inc/data.js", "var events = " . jso
 
 echo "Done.\n";
 
+function get_event_date( $event ) {
+	$photos = $event->getPhotos();
+
+	usort( $photos, 'sort_photos_by_date' );
+
+	return $photos[0]->getDateTime()->format( "Y-m-d" );
+}
+
+function sort_events( $a, $b ) {
+	return ( get_event_date( $a ) < get_event_date( $b ) ? -1 : 1 );
+}
