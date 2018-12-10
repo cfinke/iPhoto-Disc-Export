@@ -183,7 +183,7 @@
 				
 				document.title = page_title;
 
-				$( '.site-title' ).text( photo.description );
+				$( '.site-title' ).html( photo.description.replace( /\n/, '<br />' ) );
 				$( '.site-description' ).text( photo.dateFriendly );
 				var photo_markup = generate_photo( photo );
 				
