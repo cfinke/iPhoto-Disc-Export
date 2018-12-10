@@ -1,7 +1,7 @@
 iPhoto-Disc-Export
 ==================
 
-Export your iPhoto library as a browseable website that can be burned to a disc and remain completely functional offline or uploaded and served from a website.
+Export your iPhoto library as a browsable website that can be burned to a disc and remain completely functional offline or uploaded and served from a website.
 
 This was put together for a one-time-use project, so some of the code was specific to my needs, but you might find it useful as a starting point, a.k.a. don't judge me by the messiness of this code.
 
