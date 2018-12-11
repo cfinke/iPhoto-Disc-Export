@@ -7,7 +7,7 @@ require "lib/PhotoLibrary/Library.php";
 require "lib/PhotoLibrary/Photo.php";
 require "lib/PhotoLibrary/Face.php";
 
-$cli_options = getopt( "l::o::js:u", array( 'library::', 'output-dir::', 'jpegrescan', 'start_date:', 'update_site' ) );
+$cli_options = getopt( "l::o::js:ut:", array( 'library::', 'output-dir::', 'jpegrescan', 'start_date:', 'update_site', 'timezone:' ) );
 
 if ( isset( $cli_options['l'] ) ) {
 	$cli_options['library'] = $cli_options['l'];
@@ -23,6 +23,10 @@ if ( isset( $cli_options['j'] ) || isset( $cli_options['jpegrescan'] ) ) {
 
 if ( isset( $cli_options['s'] ) ) {
 	$cli_options['start_date'] = $cli_options['s'];
+}
+
+if ( isset( $cli_options['t'] ) ) {
+	$cli_options['timezone'] = $cli_options['t'];
 }
 
 if ( isset( $cli_options['start_date'] ) ) {
@@ -42,6 +46,10 @@ if ( isset( $cli_options['update_site'] ) ) {
 }
 else {
 	$cli_options['update_site'] = false;
+}
+
+if ( isset( $cli_options['timezone'] ) ) {
+	date_default_timezone_set( $cli_options['timezone'] );
 }
 
 if ( empty( $cli_options['library'] ) || empty( $cli_options['output-dir'] ) ) {
