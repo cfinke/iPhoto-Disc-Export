@@ -270,7 +270,7 @@ foreach ( $cli_options['library'] as $library_path ) {
 
 			$idx++;
 
-			$json_photos[ $photo_idx ] = array( 'id' => $photo_idx, 'path' => str_replace( $cli_options['output-dir'], '', $event_folder . $photo_filename ), 'thumb_path' => str_replace( $cli_options['output-dir'], '', $thumb_folder . "thumb_" . $photo_filename ), 'event_id' => $event_idx, 'title' => $title, 'description' => $title/* . "\n\n" . trim( $photo->getDescription() )*/, 'faces' => $face_names, 'date' => date( "Y-m-d", $photoTimestamp ), 'dateFriendly' => date( "F j, Y", $photoTimestamp ) );
+			$json_photos[ $photo_idx ] = array( 'id' => $photo_idx, 'path' => str_replace( $cli_options['output-dir'], '', $event_folder . $photo_filename ), 'thumb_path' => str_replace( $cli_options['output-dir'], '', $thumb_folder . "thumb_" . $photo_filename ), 'event_id' => $event_idx, 'title' => $title, 'description' => $title/* . "\n\n" . trim( $photo->getDescription() )*/, 'faces' => $face_names, 'date' => date( "Y-m-d", $photoTimestamp ), 'dateFriendly' => date( "F j, Y g:i A", $photoTimestamp ) );
 			$event_photos[] = $photo_idx;
 
 			$photo_idx++;
