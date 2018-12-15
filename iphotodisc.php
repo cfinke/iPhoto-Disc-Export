@@ -211,7 +211,9 @@ foreach ( $cli_options['library'] as $library_path ) {
 		foreach ( $photos as $photo ) {
 			$photo_path = $photo->getPath();
 
-			$photo_date = date( "Y-m-d H-i-s", strtotime( $photo->getDateTime()->format( "Y-m-d H:i:s" ) ) + $timezone_offset );
+			$localPhotoTimestamp = (int) $photo->getDateTime()->format( "U" ) + $timezone_offset;
+
+			$photo_date = date( "Y-m-d H-i-s", $localPhotoTimestamp );
 			$photo_filename = $photo_date . " - " . str_pad( $idx, strlen( (string) $photo_count ), "0", STR_PAD_LEFT );
 
 			$title = trim( $photo->getCaption() );
@@ -249,8 +251,7 @@ foreach ( $cli_options['library'] as $library_path ) {
 
 			$photo_filename .= "." . $photo_extension;
 
-			$localPhotoTimestamp = (int) $photo->getDateTime()->format( "U" );
-			$utcPhotoTimestamp = (int) $photo->getDateTime()->format( "U" ) - $timezone_offset; // Mac OS expects this to be in UTC
+			$utcPhotoTimestamp = $localPhotoTimestamp - $timezone_offset; // Mac OS expects this to be in UTC
 
 			if ( ! file_exists( $event_folder . $photo_filename ) ) {
 				copy( $photo->getPath(), $event_folder . $photo_filename );
@@ -294,19 +295,23 @@ file_put_contents( $original_export_path . "/inc/data.js", "var events = " . jso
 echo "Done.\n";
 
 function get_event_date( $event ) {
+	global $timezone_offset;
+	
 	$photos = $event->getPhotos();
 
 	usort( $photos, 'sort_photos_by_date' );
 
-	return date( "Y-m-d", $photos[0]->getDateTime()->format( "U" ) );
+	return date( "Y-m-d", (int) $photos[0]->getDateTime()->format( "U" ) + $timezone_offset );
 }
 
 function get_event_timestamp( $event ) {
+	global $timezone_offset;
+	
 	$photos = $event->getPhotos();
 
 	usort( $photos, 'sort_photos_by_date' );
 
-	return $photos[0]->getDateTime()->format( "U" );
+	return $photos[0]->getDateTime()->format( "U" ) + $timezone_offset;
 }
 
 function sort_events( $a, $b ) {
