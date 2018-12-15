@@ -118,6 +118,12 @@ class Photo
         // gmmktime( 0, 0, 0, 1, 1, 2001 ) = 978307200
         $IPHOTO_EPOCH = 978307200;
 
+        $timezone = new \DateTimeZone( date_default_timezone_get() );
+        $time_right_now = new \DateTime( 'now', $timezone );
+        $timezone_offset = $timezone->getOffset( $time_right_now );
+
+        $IPHOTO_EPOCH += $timezone_offset;
+
         return new \DateTime('@' . ($IPHOTO_EPOCH + intval($this->data['DateAsTimerInterval'])));
     }
 

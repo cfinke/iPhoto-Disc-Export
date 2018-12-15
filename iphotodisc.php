@@ -147,6 +147,10 @@ $json_faces = array();
 
 $photo_idx = 1;
 
+$timezone = new \DateTimeZone( date_default_timezone_get() );
+$time_right_now = new \DateTime( 'now', $timezone );
+$timezone_offset = $timezone->getOffset( $time_right_now );
+
 foreach ( $cli_options['library'] as $library_path ) {
 	echo "Processing " . $library_path . "...\n";
 
@@ -205,8 +209,10 @@ foreach ( $cli_options['library'] as $library_path ) {
 		$photo_count = count( $json_photos );
 
 		foreach ( $photos as $photo ) {
-			$photo_filename = $photo->getDateTime()->format( "Y-m-d H-i-s" );
-			$photo_filename .= " - " . str_pad( $idx, strlen( (string) $photo_count ), "0", STR_PAD_LEFT );
+			$photo_path = $photo->getPath();
+
+			$photo_date = date( "Y-m-d H-i-s", strtotime( $photo->getDateTime()->format( "Y-m-d H:i:s" ) ) + $timezone_offset );
+			$photo_filename = $photo_date . " - " . str_pad( $idx, strlen( (string) $photo_count ), "0", STR_PAD_LEFT );
 
 			$title = trim( $photo->getCaption() );
 
@@ -236,7 +242,6 @@ foreach ( $cli_options['library'] as $library_path ) {
 				}
 			}
 
-			$photo_path = $photo->getPath();
 			$tmp = explode( ".", $photo_path );
 			$photo_extension = array_pop( $tmp );
 
@@ -244,8 +249,7 @@ foreach ( $cli_options['library'] as $library_path ) {
 
 			$photo_filename .= "." . $photo_extension;
 
-			$photoTimestamp = (int) $photo->getDateTime()->format( "U" );
-			$localPhotoTimestamp = $photoTimestamp + (5 * 60 * 60);
+			$localPhotoTimestamp = (int) $photo->getDateTime()->format( "U" ) - $timezone_offset; // Mac OS expects this to be in UTC
 
 			if ( ! file_exists( $event_folder . $photo_filename ) ) {
 				copy( $photo->getPath(), $event_folder . $photo_filename );
