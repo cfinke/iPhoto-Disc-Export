@@ -302,7 +302,27 @@ echo "Writing JS for website...\n";
 
 ksort( $json_faces );
 
-file_put_contents( $original_export_path . "/inc/data.js", "var events = " . json_encode( $json_events, JSON_PRETTY_PRINT ) . ";\n\nvar photos = " . json_encode( $json_photos, JSON_PRETTY_PRINT ) . ";\n\nvar faces = " . json_encode( $json_faces, JSON_PRETTY_PRINT ) . ";\n\n" );
+file_put_contents( $original_export_path . "/inc/data.js", "var events = {", FILE_APPEND );
+write_json_object_without_using_so_much_memory( $original_export_path . "/inc/data.js", $json_events );
+file_put_contents( $original_export_path . "/inc/data.js", "};\n\n", FILE_APPEND );
+file_put_contents( $original_export_path . "/inc/data.js", "var photos = {", FILE_APPEND );
+write_json_object_without_using_so_much_memory( $original_export_path . "/inc/data.js", $json_photos );
+file_put_contents( $original_export_path . "/inc/data.js", "};\n\n", FILE_APPEND );
+file_put_contents( $original_export_path . "/inc/data.js", "var faces = {", FILE_APPEND );
+write_json_object_without_using_so_much_memory( $original_export_path . "/inc/data.js", $json_faces );
+file_put_contents( $original_export_path . "/inc/data.js", "};\n\n", FILE_APPEND );
+
+function write_json_object_without_using_so_much_memory( $path, $obj ) {
+	foreach ( $obj as $idx => $member ) {
+		$comma = ",";
+
+		if ( next( $obj ) === false ) {
+			$comma = "";
+		}
+
+		file_put_contents( $path, json_encode( (string) $idx ) . ': ' . json_encode( $member, JSON_PRETTY_PRINT ) . $comma . "\n", FILE_APPEND );
+	}
+}
 
 echo "Done.\n";
 
