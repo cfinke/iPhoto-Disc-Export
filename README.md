@@ -16,11 +16,12 @@ Optional arguments:
 
 * `--jpegrescan`: will invoke `jpegrescan` to optimize the size of the export photos. (Obviously, you must have (`jpegrescan`)[https://github.com/kud/jpegrescan] installed.) This will take a long time.
 * `--start-date=YYYY-MM-DD`: will limit the export to photos from on or after that date.
+* `--end-date=YYYY-MM-DD`: will limit the export to photos from on or before that date.
 * `--timezone=[PHP timezone identifier]: Sets the timezone that the script should use for considering photo dates.
 
 You may specify multiple `--library` arguments to export photos from multiple libraries:
 
-`$ ./iphotodisc.php --library=/path/to/photo/library --library=/path/to/photo/library2 --output-dir=/path/for/exported/files [--jpegrescan --start-date=1950-01-01]`
+`$ ./iphotodisc.php --library=/path/to/photo/library --library=/path/to/photo/library2 --output-dir=/path/for/exported/files [--jpegrescan --start-date=1950-01-01 --end-date=1955-01-01]`
 
 The Website
 ===========

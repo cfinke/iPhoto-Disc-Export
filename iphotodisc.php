@@ -7,7 +7,7 @@ require "lib/PhotoLibrary/Library.php";
 require "lib/PhotoLibrary/Photo.php";
 require "lib/PhotoLibrary/Face.php";
 
-$cli_options = getopt( "l::o::js:ut:", array( 'library::', 'output-dir::', 'jpegrescan', 'start_date:', 'update_site', 'timezone:' ) );
+$cli_options = getopt( "l::o::js:e:ut:", array( 'library::', 'output-dir::', 'jpegrescan', 'start_date:', 'end_date:', 'update_site', 'timezone:' ) );
 
 if ( isset( $cli_options['l'] ) ) {
 	$cli_options['library'] = $cli_options['l'];
@@ -33,6 +33,14 @@ if ( isset( $cli_options['start_date'] ) ) {
 	$cli_options['start_date'] = date( 'Y-m-d', strtotime( $cli_options['start_date'] ) );
 }
 
+if ( isset( $cli_options['end_date'] ) ) {
+	$cli_options['end_date'] = date( 'Y-m-d', strtotime( $cli_options['end_date'] ) );
+}
+
+if ( ! isset( $cli_options['end_date'] ) || ! $cli_options['end_date'] ) {
+	$cli_options['end_date'] = false;
+}
+
 if ( ! isset( $cli_options['start_date'] ) || ! $cli_options['start_date'] ) {
 	$cli_options['start_date'] = false;
 }
@@ -49,11 +57,11 @@ else {
 }
 
 if ( isset( $cli_options['timezone'] ) ) {
-	date_default_timezone_set( $cli_options['timezone'] );
+//	date_default_timezone_set( $cli_options['timezone'] );
 }
 
 if ( empty( $cli_options['library'] ) || empty( $cli_options['output-dir'] ) ) {
-	file_put_contents('php://stderr', "Usage: ./iphotodisc.php --library=/path/to/photo/library --output-dir=/path/for/exported/files [--jpegrescan --start_date=1950-01-01]\n" );
+	file_put_contents('php://stderr', "Usage: ./iphotodisc.php --library=/path/to/photo/library --output-dir=/path/for/exported/files [--jpegrescan --start_date=1950-01-01 --end_date=1955-01-01]\n" );
 	die;
 }
 
@@ -181,6 +189,10 @@ foreach ( $cli_options['library'] as $library_path ) {
 		$event_date = get_event_date( $event );
 
 		if ( $cli_options['start_date'] && $event_date < $cli_options['start_date'] ) {
+			continue;
+		}
+
+		if ( $cli_options['end_date'] && $event_date > $cli_options['end_date'] ) {
 			continue;
 		}
 
