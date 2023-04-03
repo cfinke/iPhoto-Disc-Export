@@ -7,7 +7,7 @@ require "lib/PhotoLibrary/Library.php";
 require "lib/PhotoLibrary/Photo.php";
 require "lib/PhotoLibrary/Face.php";
 
-$cli_options = getopt( "l::o::js:e:ut:", array( 'library::', 'output-dir::', 'jpegrescan', 'start_date:', 'end_date:', 'update_site', 'timezone:' ) );
+$cli_options = getopt( "l::o::js:e:ut:", array( 'library:', 'output-dir:', 'jpegrescan', 'start_date:', 'end_date:', 'update_site', 'timezone:' ) );
 
 if ( isset( $cli_options['l'] ) ) {
 	$cli_options['library'] = $cli_options['l'];
